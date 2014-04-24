@@ -1,8 +1,4 @@
 
-# *************
-# Simple tokens
-# *************
-
 Space: ' '
 
 Comma: ','
@@ -38,9 +34,7 @@ Pipe: '|'
 Ampersand: '&'
 Equals: '='
 
-# **************
-# Complex tokens
-# **************
+
 
 Exponentiation: '^^'
 LShift: '<<'

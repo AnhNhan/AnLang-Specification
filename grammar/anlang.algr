@@ -1,5 +1,5 @@
 
-@import tokens.algr
+@import 'tokens.algr'
 
 S:
     - ModuleDeclaration + Top
@@ -40,7 +40,7 @@ TypeDefinition:
 
 FunctionDefinition:
     - FunctionDefinitionHeader
-    - FunctionDefinitionHeader + Block { FunctionDefinitionBody }
+    - FunctionDefinitionHeader + Curly_Open + FunctionDefinitionBody Curly_Close
 
 FunctionDefinitionHeader:
     - SymbolName + Parenthesis_Open + Parenthesis_Close
@@ -53,4 +53,4 @@ FunctionDefinitionArguments:
     - FunctionDefinitionArguments + Comma + FunctionDefinitionArguments
 
 FunctionDefinitionBody:
-    Statement
+    - Statement
