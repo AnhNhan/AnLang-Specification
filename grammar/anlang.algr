@@ -36,21 +36,6 @@ Definitions:
     - TypeDefinition
     - FunctionDefinition
 
-TypeDefinition:
+@import 'type-def.algr'
 
-FunctionDefinition:
-    - FunctionDefinitionHeader
-    - FunctionDefinitionHeader + Curly_Open + FunctionDefinitionBody Curly_Close
-
-FunctionDefinitionHeader:
-    - SymbolName + Parenthesis_Open + Parenthesis_Close
-    - SymbolName + Parenthesis_Open + FunctionDefinitionArguments + Parenthesis_Close
-
-FunctionDefinitionArguments:
-    - SymbolName
-    - At_Sign + SymbolName
-    - SymbolName + SymbolName
-    - FunctionDefinitionArguments + Comma + FunctionDefinitionArguments
-
-FunctionDefinitionBody:
-    - Statement
+@import 'function-def.algr'

@@ -1,0 +1,20 @@
+
+FunctionDefinition:
+    - FunctionDefinitionHeader
+    - FunctionDefinitionHeader + FunctionBodyBlock
+
+FunctionDefinitionHeader:
+    - SymbolName + Parenthesis_Open + Parenthesis_Close
+    - SymbolName + Parenthesis_Open + FunctionDefinitionArguments + Parenthesis_Close
+
+FunctionDefinitionArguments:
+    - SymbolName
+    - At_Sign + SymbolName
+    - SymbolName + SymbolName
+    - FunctionDefinitionArguments + Comma + FunctionDefinitionArguments
+
+FunctionBodyBlock:
+    - Curly_Open + FunctionBodyBlock Curly_Close
+
+FunctionBody:
+    - Statement
