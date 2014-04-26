@@ -1,5 +1,6 @@
 
 @import 'tokens.algr'
+@import 'tokens-word.algr'
 
 S:
     - ModuleDeclaration + Top
@@ -10,27 +11,27 @@ Top:
     - Statement + Top
 
 ModuleDeclaration:
-    'module' + Name
+    T_Module + Name
 
 Name:
     - SymbolName
     - SymbolName + NamespaceSep + Name
 
 NamespaceSep:
-    Dot
+    T_Dot
 
 Statement:
     - ImportStmt
     - Definitions
 
 ImportStmt:
-    - 'import' + Name
-    - 'import' + Name + Colon + ImportDetail
+    - T_Import + Name
+    - T_Import + Name + T_Colon + ImportDetail
 
 ImportDetail:
     - Name
-    - Name + Equals + Name
-    - ImportDetail + Comma + ImportDetail
+    - Name + T_Equals + Name
+    - ImportDetail + T_Comma + ImportDetail
 
 Definitions:
     - TypeDefinition

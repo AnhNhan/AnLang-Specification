@@ -1,3 +1,3 @@
 
 TypeDefinition:
-    - 'type' + SymbolName + 'tbc'
+    - T_Type + SymbolName + 'tbc'

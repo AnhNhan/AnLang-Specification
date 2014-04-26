@@ -1,0 +1,25 @@
+
+T_Module: 'module'
+T_Import: 'import'
+
+T_If: 'if'
+T_Else: 'else'
+T_While: 'while'
+T_Do: 'do'
+T_For: 'for'
+T_Foreach: 'foreach'
+
+T_Eq: 'eq'
+T_Not: 'not'
+
+T_In: 'in'
+
+T_Static: 'static'
+T_Const: 'const'
+T_Immutable: 'immutable'
+
+T_Assert: 'assert'
+T_Return: 'return'
+
+T_Type: 'type'
+T_Behaviour: 'behavior'
