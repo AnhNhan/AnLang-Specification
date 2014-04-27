@@ -39,16 +39,18 @@ extract(url, pattern)
 
     return extracted_parameters
 
-type Route
+struct Route
     string   pattern
     callable controller
 
     this(@pattern, @controller)
 
     process(url)
+        // callable.call_v takes an array of values and uses these as
+        // arguments for the invoked function
         return controller.call_v (url extract pattern)
 
-type Router
+struct Router
     Route[] routes
 
     route(Route route)
