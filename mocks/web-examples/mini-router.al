@@ -9,13 +9,13 @@ matches(url, pattern)
     url_parts     = url.split_in_parts
     pattern_parts = pattern.split_in_parts
 
-    if url_parts.count not eq pattern_parts
+    if not url_parts.count eq pattern_parts
         return false
 
     foreach index, pattern_part in pattern_parts
         // We don't need to worry about variables, so skip them
         if not pattern_part[0] eq ':'
-            if pattern_part not eq url_parts[index]
+            if not pattern_part eq url_parts[index]
                 // Non-variable does not match
                 return false
 
@@ -69,7 +69,7 @@ to(pattern, controller)
 main()
     router = Router
 
-    router route ''            to () -> 'Hello, World!'
+    router route ''            to ()     -> 'Hello, World!'
     router route 'hello/:name' to (name) -> 'Hello, %s!' format name
 
     println router process ''
