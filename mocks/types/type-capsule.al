@@ -23,12 +23,8 @@ type time_t
             m += 1
     }
 
-    this (@h, @m, @s)
-
     operator '+' (time_t rhs)
-        h += rhs.h
-        m += rhs.m
-        s += rhs.s
+        return time_t h + rhs.h, m + rhs.m, s + rhs.s
 
 main()
     time1 = time_t 17, 59, 59
