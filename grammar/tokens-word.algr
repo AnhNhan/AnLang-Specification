@@ -22,4 +22,7 @@ T_Assert: 'assert'
 T_Return: 'return'
 
 T_Type: 'type'
+T_Struct: 'struct'
+T_Tuple: 'tuple'
 T_Behaviour: 'behavior'
+T_Internal: 'internal'

@@ -4,17 +4,17 @@ FunctionDefinition:
     - FunctionDefinitionHeader + FunctionBodyBlock
 
 FunctionDefinitionHeader:
-    - SymbolName + Parenthesis_Open + Parenthesis_Close
-    - SymbolName + Parenthesis_Open + FunctionDefinitionArguments + Parenthesis_Close
+    - SymbolName + T_Parenthesis_Open + T_Parenthesis_Close
+    - SymbolName + T_Parenthesis_Open + FunctionDefinitionArguments + T_Parenthesis_Close
 
 FunctionDefinitionArguments:
     - SymbolName
-    - At_Sign + SymbolName
+    - T_At_Sign + SymbolName
     - SymbolName + SymbolName
-    - FunctionDefinitionArguments + Comma + FunctionDefinitionArguments
+    - FunctionDefinitionArguments + T_Comma + FunctionDefinitionArguments
 
 FunctionBodyBlock:
-    - Curly_Open + FunctionBodyBlock Curly_Close
+    - T_Curly_Open + FunctionBodyBlock + T_Curly_Close
 
 FunctionBody:
     - Statement

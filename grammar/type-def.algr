@@ -1,3 +1,6 @@
 
 TypeDefinition:
     - T_Type + SymbolName + 'tbc'
+
+TypeStmt:
+    - 'hi'
