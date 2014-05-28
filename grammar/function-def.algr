@@ -1,7 +1,7 @@
 
 FunctionDefinition:
-    - FunctionDefinitionHeader
-    - FunctionDefinitionHeader + FunctionBodyBlock
+    - T_Fn + FunctionDefinitionHeader
+    - T_Fn + FunctionDefinitionHeader + FunctionBodyBlock
 
 FunctionDefinitionHeader:
     - SymbolName + T_Parenthesis_Open + T_Parenthesis_Close

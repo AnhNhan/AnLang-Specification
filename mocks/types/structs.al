@@ -5,16 +5,16 @@ struct Foo
     property foo
         return f + f
 
-    add_foo()
+    fn add_foo()
         f = f + f
 
-    add(x)
+    fn add(x)
         f = f + x
 
 struct Bar
     Foo foo
 
-    baz()
+    fn baz()
         foo.add_foo()
         return foo.foo
 
@@ -29,10 +29,10 @@ struct Iota
     property empty
         return front >= end
 
-    popFront()
+    fn popFront()
         front += step
 
-main()
+fn main()
     // Construct a Foo struct
     f = Foo
 

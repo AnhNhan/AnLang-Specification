@@ -30,14 +30,14 @@ struct HtmlTag
     operator indexAccessAssign(name, value)
         return options[name] = value
 
-    removeContents()
+    fn removeContents()
         contents = []
 
-    setContents(_contents)
+    fn setContents(_contents)
         removeContents()
         append(_contents)
 
-    append(_contents)
+    fn append(_contents)
         if _contents eq null
             return
 
@@ -65,32 +65,32 @@ struct HtmlTag
     property id(val) this["id"] = val
 
     property classes return this["class"]
-    add_class(class)
+    fn add_class(class)
         if class eq null or class.empty
             return
         this["class"] = classes ~ ' ' ~ class
 
 // Hoping that this is safe enough
-_html_escape(input)
+fn _html_escape(input)
     return input replace ['<', '>', '"'], ['&lt;', '&gt;', '&quot;']
 
-tag(name, contents = null, class = null)
+fn tag(name, contents = null, class = null)
     _tag = HtmlTag name, contents
     _tag add_class class
     return _tag
 
-div(class = '', contents = null, id = null)
+fn div(class = '', contents = null, id = null)
     _tag = tag('div', contents, class)
     _tag.id = id
     return _tag
 
-h1(contents, class = '') return tag('h1', contents, class)
-h2(contents, class = '') return tag('h2', contents, class)
-h3(contents, class = '') return tag('h3', contents, class)
+fn h1(contents, class = '') return tag('h1', contents, class)
+fn h2(contents, class = '') return tag('h2', contents, class)
+fn h3(contents, class = '') return tag('h3', contents, class)
 
-p(contents, class = '') return tag('p', contents, class)
+fn p(contents, class = '') return tag('p', contents, class)
 
-btn(text, href = null, color = 'default')
+fn btn(text, href = null, color = 'default')
     _btn = Tag 'a', text
     // Remember, setting a non-nullable value in an hashmap to null makes sure it does not exist
     _btn["href"] = href
@@ -107,10 +107,10 @@ struct ContentPanel
 
     property contents(_contents)
         contents setContents _contents
-    append(_contents)
+    fn append(_contents)
         contents setContents _contents
 
-    renderToTag()
+    fn renderToTag()
         panel = div('panel')
 
         if color
@@ -125,13 +125,14 @@ struct ContentPanel
     behaviour stringof
         return renderToTag().stringof
 
-errorPanel = ContentPanel
-errorPanel.color = 'danger'
-errorPanel.header = 'Something\'s wrong!'
-errorPanel.contents = 'Oh snap! You got an error. Something probably went terribly wrong. You better do this:'
-errorPanel append 'Take this action'.btn(color='danger')
-errorPanel append 'Or do this'.btn
+fn main()
+    errorPanel = ContentPanel
+    errorPanel.color = 'danger'
+    errorPanel.header = 'Something\'s wrong!'
+    errorPanel.contents = 'Oh snap! You got an error. Something probably went terribly wrong. You better do this:'
+    errorPanel append 'Take this action'.btn(color='danger')
+    errorPanel append 'Or do this'.btn
 
-print errorPanel
-// Output:
-// <div class="panel panel-color-danger"><div class="panel-header">Something's wrong!</div><div class="panel-body">Oh snap! You got an error. Something probably went terribly wrong. You better do this: <a class="btn btn-color-danger">Take this action!</a><a class="btn btn-color-default">Or do this</a></div></div>
+    print errorPanel
+    // Output:
+    // <div class="panel panel-color-danger"><div class="panel-header">Something's wrong!</div><div class="panel-body">Oh snap! You got an error. Something probably went terribly wrong. You better do this: <a class="btn btn-color-danger">Take this action!</a><a class="btn btn-color-default">Or do this</a></div></div>

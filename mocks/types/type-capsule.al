@@ -32,7 +32,7 @@ struct time_t
         m += rhs.m
         h += rhs.h
 
-main()
+fn main()
     time1 = time_t 17, 59, 59
     time2 = time_t  0, 30, 25
     time2 += time_t 0,  5,  0

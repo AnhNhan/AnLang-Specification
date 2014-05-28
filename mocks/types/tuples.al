@@ -8,13 +8,13 @@ tuple Vector
     number y
     number z
 
-add(Vector self, Vector rhs)
+fn add(Vector self, Vector rhs)
     return Vector self.x + rhs.x, self.y + rhs.y, self.z + rhs.z
 
-add(Vector self, number x, number y, number z)
+fn add(Vector self, number x, number y, number z)
     return Vector self.x + x, self.y + y, self.z + z
 
-main()
+fn main()
     vec1 = Vector 1, 2, 3
     vec2 = (3, 2, 1)
 

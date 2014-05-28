@@ -2,10 +2,10 @@
 // This mock demonstrates a router as found common in web applications
 // It supports variables, e.g. /page/:name
 
-split_in_parts(url)
+fn split_in_parts(url)
     url.trim(' /').split('/')
 
-matches(url, pattern)
+fn matches(url, pattern)
     url_parts     = url.split_in_parts
     pattern_parts = pattern.split_in_parts
 
@@ -21,7 +21,7 @@ matches(url, pattern)
 
     return true
 
-extract(url, pattern)
+fn extract(url, pattern)
     // No variables? We can save ourselves the work!
     if not ':' in pattern
         return []
@@ -45,7 +45,7 @@ struct Route
 
     this(@pattern, @controller)
 
-    process(url)
+    fn process(url)
         // callable.call_v takes an array of values and uses these as
         // arguments for the invoked function
         return controller.call_v (url extract pattern)
@@ -53,17 +53,17 @@ struct Route
 struct Router
     Route[] routes
 
-    route(Route route)
+    fn route(Route route)
         routes[] = route
 
-    process(url)
+    fn process(url)
         foreach route in routes
             if url matches route.pattern
                 return route process url
 
         return '404 - Url Not Found :('
 
-to(pattern, controller)
+fn to(pattern, controller)
     return Route pattern, controller
 
 main()
