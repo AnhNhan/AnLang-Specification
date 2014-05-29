@@ -54,10 +54,10 @@ struct HtmlTag
                 rendered_options ~= '="' ~ _html_escape(value) ~ '"'
 
         if isSelfClosing
-            result = '<%s%s />' format tag_name, rendered_options
+            result = '<%s%s />' `format` tag_name, rendered_options
         else
             contents = this.contents.join()
-            result = '<%s%s>%s<%1$s />' format tag_name, rendered_options, contents
+            result = '<%s%s>%s<%1$s />' `format` tag_name, rendered_options, contents
         return result
 
     // A few utility methods for HTML usage
@@ -72,11 +72,11 @@ struct HtmlTag
 
 // Hoping that this is safe enough
 fn _html_escape(input)
-    return input replace ['<', '>', '"'], ['&lt;', '&gt;', '&quot;']
+    return input `replace` ['<', '>', '"'], ['&lt;', '&gt;', '&quot;']
 
 fn tag(name, contents = null, class = null)
     _tag = HtmlTag name, contents
-    _tag add_class class
+    _tag `add_class` class
     return _tag
 
 fn div(class = '', contents = null, id = null)
@@ -94,8 +94,8 @@ fn btn(text, href = null, color = 'default')
     _btn = Tag 'a', text
     // Remember, setting a non-nullable value in an hashmap to null makes sure it does not exist
     _btn["href"] = href
-    _btn add_class 'btn'
-    _btn add_class 'btn-color-' ~ color
+    _btn `add_class` 'btn'
+    _btn `add_class` 'btn-color-' ~ color
     return _btn
 
 struct ContentPanel
@@ -106,20 +106,20 @@ struct ContentPanel
     property isSafeHtml return true
 
     property contents(_contents)
-        contents setContents _contents
+        contents `setContents` _contents
     fn append(_contents)
-        contents setContents _contents
+        contents `setContents` _contents
 
     fn renderToTag()
         panel = div('panel')
 
         if color
-            panel add_class 'panel-color-' ~ color
+            panel `add_class` 'panel-color-' ~ color
 
         if header
-            panel append div('panel-header', header)
+            panel `append` div('panel-header', header)
 
-        panel append contents
+        panel `append` contents
         return panel
 
     behaviour stringof
@@ -130,8 +130,8 @@ fn main()
     errorPanel.color = 'danger'
     errorPanel.header = 'Something\'s wrong!'
     errorPanel.contents = 'Oh snap! You got an error. Something probably went terribly wrong. You better do this:'
-    errorPanel append 'Take this action'.btn(color='danger')
-    errorPanel append 'Or do this'.btn
+    errorPanel `append` 'Take this action'.btn(color='danger')
+    errorPanel `append` 'Or do this'.btn
 
     print errorPanel
     // Output:

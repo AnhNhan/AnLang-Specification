@@ -48,7 +48,7 @@ struct Route
     fn process(url)
         // callable.call_v takes an array of values and uses these as
         // arguments for the invoked function
-        return controller.call_v (url extract pattern)
+        return controller.call_v (url `extract` pattern)
 
 struct Router
     Route[] routes
@@ -58,8 +58,8 @@ struct Router
 
     fn process(url)
         foreach route in routes
-            if url matches route.pattern
-                return route process url
+            if url `matches` route.pattern
+                return route `process` url
 
         return '404 - Url Not Found :('
 
@@ -69,12 +69,12 @@ fn to(pattern, controller)
 main()
     router = Router
 
-    router route ''            to ()     -> 'Hello, World!'
-    router route 'hello/:name' to (name) -> 'Hello, %s!' format name
+    router `route` ''            `to` ()     -> 'Hello, World!'
+    router `route` 'hello/:name' `to` (name) -> 'Hello, %s!' `format` name
 
-    println router process ''
-    println router process 'hello/Rowan Atkinson'
-    println router process 'hello/'
+    println router `process` ''
+    println router `process` 'hello/Rowan Atkinson'
+    println router `process` 'hello/'
 
     // Output:
     //

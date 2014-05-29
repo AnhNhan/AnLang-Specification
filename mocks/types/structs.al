@@ -38,7 +38,7 @@ fn main()
 
     f.add(5)
     // You can also write it like this
-    f add 10
+    f `add` 10
     // Member functions without arguments have to be called with dot and braces, though
     f.add_foo()
     println f.foo   // 30
