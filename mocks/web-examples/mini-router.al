@@ -40,8 +40,8 @@ fn extract(url, pattern)
     return extracted_parameters
 
 struct Route
-    string   pattern
-    callable controller
+    pattern    : string
+    controller : callable
 
     this(@pattern, @controller)
 
@@ -51,7 +51,7 @@ struct Route
         return controller.call_v (url `extract` pattern)
 
 struct Router
-    Route[] routes
+    routes : Route[]
 
     fn route(Route route)
         routes[] = route

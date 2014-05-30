@@ -11,9 +11,9 @@ type HtmlTagContents
 
 struct HtmlTag
     internal
-        string tag_name
-        string[string] options
-        HtmlTagContents[] contents
+        tag_name : string
+        options  : string[string]
+        contents : HtmlTagContents[]
 
     // The most important requirement to satisfy SafeHtml
     property isSafeHtml return true
@@ -100,8 +100,8 @@ fn btn(text, href = null, color = 'default')
 
 struct ContentPanel
     internal contents = div('panel-body')
-    string header
-    string color
+    header : string
+    color  : string
 
     property isSafeHtml return true
 

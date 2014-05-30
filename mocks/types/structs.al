@@ -1,6 +1,6 @@
 
 struct Foo
-    number f
+    f : number
 
     property foo
         return f + f
@@ -12,7 +12,7 @@ struct Foo
         f = f + x
 
 struct Bar
-    Foo foo
+    foo : Foo
 
     fn baz()
         foo.add_foo()
@@ -22,9 +22,9 @@ struct Bar
 // A range is any type that provides a front and empty property, and a popFront
 // function
 struct Iota
-    number front
-    number end
-    number step = 1
+    front : number
+    end   : number
+    step  : number = 1
 
     property empty
         return front >= end

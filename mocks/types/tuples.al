@@ -4,14 +4,14 @@ tuple Point(number, number)
 
 // Named tuple declaration
 tuple Vector
-    number x
-    number y
-    number z
+    x : number
+    y : number
+    z : number
 
-fn add(Vector self, Vector rhs)
+fn add(self : Vector, rhs : Vector)
     return Vector self.x + rhs.x, self.y + rhs.y, self.z + rhs.z
 
-fn add(Vector self, number x, number y, number z)
+fn add(self : Vector, x : number, y : number, z : number)
     return Vector self.x + x, self.y + y, self.z + z
 
 fn main()

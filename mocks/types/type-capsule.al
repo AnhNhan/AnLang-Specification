@@ -9,25 +9,25 @@ type second_t encapsule number
     range 0..59
 
 struct time_t
-    hour_t   h
+    h : hour_t
 
-    minute_t m
+    m : minute_t
         behaviour overflow_each
             this.reset()
             h += 1
 
-    second_t s
+    s : second_t
         behaviour overflow_each
             this.reset()
             m += 1
 
-    operator '+' (time_t rhs)
+    operator '+' (rhs : time_t)
         // Making good use of copy-on-write
         ret = this
         ret += rhs
         return ret
 
-    operator '+=' (time_t rhs)
+    operator '+=' (rhs : time_t)
         s += rhs.s
         m += rhs.m
         h += rhs.h
