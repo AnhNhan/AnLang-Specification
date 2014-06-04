@@ -32,6 +32,15 @@ struct time_t
         m += rhs.m
         h += rhs.h
 
+type ISBN encapsule string
+    // A simple regex
+    where this matches /^((-?)\d(-?)){10,13}$/
+
+struct Book
+    title  : string
+    author : string
+    isbn   : ISBN
+
 fn main()
     time1 = time_t 17, 59, 59
     time2 = time_t  0, 30, 25
@@ -39,3 +48,11 @@ fn main()
 
     time3 = time1 + time2
     assert time3 eq time_t 18, 35, 24
+
+    // Error: Values do not fit in range
+    time4 = time_t 56, 99, 61
+
+    // Valid
+    book1 = Book "1Q84", "Haruki Murakami", "978-0-345-80340-5"
+    // Error: "1234567" does not match type ISBN
+    book2 = Book "Foo" , "Bar Baz"        , "1234567"
