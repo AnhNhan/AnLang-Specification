@@ -66,7 +66,7 @@ struct Router
 fn to(pattern, controller)
     return Route pattern, controller
 
-main()
+fn main()
     router = Router
 
     router `route` ''            `to` ()     -> 'Hello, World!'
