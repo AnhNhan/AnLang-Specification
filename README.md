@@ -15,7 +15,7 @@ Features
 
 Not sure whether you like them, but I certainly do:
 
-## Quite minimal syntax
+## Pretty minimal syntax
 
 Away with semicolons, since I always forget them. Also, editors and IDEs don't autocomplete semicolons, which is annoying. So we got rid of them.
 
