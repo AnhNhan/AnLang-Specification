@@ -2,7 +2,7 @@
 AnLang:
     AnLang <  ModuleDeclaration? TopLevelStmt* endOfInput
 
-    ModuleDeclaration <  :'module' QualName
+    ModuleDeclaration <  'module ' QualName
 
     Name <- ;identifier
     QualName <- ;NoDiscardList(Name, NamespaceSep)
@@ -13,7 +13,6 @@ AnLang:
              /  QualName
 
     FunctionType <  'fn' '(' TypeTuple? ')' (:ReturnTypeSigil TypeName)?
-
     TypeTuple <  (TypeName (Spacing ',' Spacing TypeName)*)?
 
     ArrayLiteral <
@@ -25,15 +24,18 @@ AnLang:
 
     ExprTLStmt <-
                /  ~Definitions
-
     ExprWOTLStmt <-
                  /  ExprIfElse
                  /  ExprClosure
                  /  QualName
 
-    Expr <- ExprTLStmt / ExprWOTLStmt
+    Expr <- (ExprTLStmt / ExprWOTLStmt) ExprFollowUps?
+    ExprFollowUps <
+                  /  InfixExprSuffix+
+                  /  FuncCallArgumentTuple+
+    InfixExprSuffix <  '`' QualName '`' Expr
 
-    Import        <- 'import' :ExplicitSpacing QualName :Spacing (':' :Spacing ImportDetails)?
+    Import        <  'import ' QualName (':' ImportDetails)?
     ImportDetails <  ImportDetail (:Spacing ',' :Spacing ImportDetail)*
     ImportDetail  <  Name ('=' Name)?
 
@@ -42,9 +44,9 @@ AnLang:
               # /  StructDefinition
               # /  TypeDefinition
 
-    FunctionDefinition              <- 'fn' :ExplicitSpacing FunctionDefinitionHeader :Spacing FunctionDefinitionBody
+    FunctionDefinition              <  'fn ' FunctionDefinitionHeader FunctionDefinitionBody
     FunctionDefinitionHeader        <  Name FunctionDefinitionArgumentTuple (ReturnTypeSigil TypeName)?
-    FunctionDefinitionArgumentTuple <  '(' (FunctionDefinitionArgument (Spacing ',' Spacing FunctionDefinitionArgument)*)? ')'
+    FunctionDefinitionArgumentTuple <  '(' (FunctionDefinitionArgument (:Spacing ',' :Spacing FunctionDefinitionArgument)*)? ')'
     FunctionDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
 
     FunctionDefinitionBody <  ScopeStart FunctionBodyStmt* ScopeEnd
@@ -62,8 +64,14 @@ AnLang:
 
     ExprClosure <  (FunctionDefinitionArgumentTuple / Name) :ClosureSigil Expr
 
-    ExprIfElse <  'if' ~ExprWOTLStmt IfScopeStart (Expr / AssignStmt)* ScopeEnd
-                  ('else' ScopeStart (Expr / AssignStmt)* ScopeEnd)?
+    ExprIfElse <  'if ' ExprWOTLStmt  IfScopeStart (Expr / AssignStmt)* ScopeEnd
+                  ('else ' ScopeStart (Expr / AssignStmt)* ScopeEnd)?
+
+    ExprFuncCall <  QualName FuncCallArgumentTuple
+    FuncCallArgumentTuple < '(' (FuncCallArgument (',' :Spacing FuncCallArgument)*)? ')'
+    FuncCallArgument <
+                     /  Name '=' Expr
+                     /  Expr
 
     # Tokens
 
