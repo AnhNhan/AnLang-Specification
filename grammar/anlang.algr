@@ -1,42 +1,69 @@
 
-@import 'tokens.algr'
-@import 'tokens-word.algr'
-
 S:
-    - ModuleDeclaration + Top
-    - Top
+    (ModuleDeclaration)? + Top
 
 Top:
-    - Statement
-    - Statement + Top
+    (TopLevelStatement)+
 
 ModuleDeclaration:
-    T_Module + Name
+    'module' + Name
 
 Name:
-    - SymbolName
-    - SymbolName + NamespaceSep + Name
+    SymbolName + ('.' + Name)*
 
-NamespaceSep:
-    T_Dot
+TypeName:
+    - Name
+    - TypeName + '[' + (TypeName)? + ']'
 
-Statement:
+TopLevelStatement:
     - ImportStmt
+    - ExprTLStmt
+
+// Most (currently all) top-level statements are allowed as expressions
+ExprTLStmt:
     - Definitions
 
+// Expr without top-level statements
+ExprWOTLStmt:
+    - IfElseExpr
+
+Expr:
+    - ExprTLStmt
+    - ExprWOTLStmt
+
 ImportStmt:
-    - T_Import + Name
-    - T_Import + Name + T_Colon + ImportDetail
+    - 'import' + Name + (':' + ImportDetails)?
+
+ImportDetails:
+    - (ImportDetail + ',')* + ImportDetail
 
 ImportDetail:
-    - Name
-    - Name + T_Equals + Name
-    - ImportDetail + T_Comma + ImportDetail
+    - Name + ('=' + Name)?
 
 Definitions:
     - TypeDefinition
+    - TupleDefinition
+    - StructDefinition
     - FunctionDefinition
 
-@import 'type-def.algr'
+FunctionDefinition:
+    'fn' + FunctionDefinitionHeader
 
-@import 'function-def.algr'
+FunctionDefinitionHeader:
+    SymbolName + FunctionDefinitionArgumentTuple + (':' + Name)?
+
+FunctionDefinitionArgumentTuple:
+    '(' + (FunctionDefinitionArgument)* + ')'
+
+FunctionDefinitionArgument:
+    SymbolName + (':' + TypeName)? + ('=' + Expr)?
+
+FunctionDefinitionBody:
+    '{' + (FunctionBodyStmt)* + '}'
+
+FunctionBodyStmt:
+    - TopLevelStatement
+    - ExprWOTLStmt
+
+IfElseExpr:
+    'if' + Expr + FunctionDefinitionBody + ('else' + FunctionDefinitionBody)?

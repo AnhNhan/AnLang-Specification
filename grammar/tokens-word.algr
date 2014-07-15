@@ -21,6 +21,8 @@ T_Immutable: 'immutable'
 T_Assert: 'assert'
 T_Return: 'return'
 
+T_End: 'end'
+
 T_Fn: 'fn'
 T_Type: 'type'
 T_Struct: 'struct'
