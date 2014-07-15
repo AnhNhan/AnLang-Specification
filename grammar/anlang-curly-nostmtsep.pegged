@@ -1,0 +1,110 @@
+
+AnLang:
+    AnLang <  ModuleDeclaration? TopLevelStmt* endOfInput
+
+    ModuleDeclaration <  :'module' QualName
+
+    Name <- ;identifier
+    QualName <- ;NoDiscardList(Name, NamespaceSep)
+
+    TypeName <-
+             /  FunctionType
+             /  QualName ArrayLiteral+
+             /  QualName
+
+    FunctionType <  'fn' '(' TypeTuple? ')' (:ReturnTypeSigil TypeName)?
+
+    TypeTuple <  (TypeName (Spacing ',' Spacing TypeName)*)?
+
+    ArrayLiteral <
+              /  '[' TypeName? ']'
+
+    TopLevelStmt <
+                 /  ~ExprTLStmt
+                 /  Import
+
+    ExprTLStmt <-
+               /  ~Definitions
+
+    ExprWOTLStmt <-
+                 /  ExprIfElse
+                 /  ExprClosure
+                 /  QualName
+
+    Expr <- ExprTLStmt / ExprWOTLStmt
+
+    Import        <- 'import' :ExplicitSpacing QualName :Spacing (':' :Spacing ImportDetails)?
+    ImportDetails <  ImportDetail (:Spacing ',' :Spacing ImportDetail)*
+    ImportDetail  <  Name ('=' Name)?
+
+    Definitions <  FunctionDefinition
+              # /  TupleDefinition
+              # /  StructDefinition
+              # /  TypeDefinition
+
+    FunctionDefinition              <- 'fn' :ExplicitSpacing FunctionDefinitionHeader :Spacing FunctionDefinitionBody
+    FunctionDefinitionHeader        <  Name FunctionDefinitionArgumentTuple (ReturnTypeSigil TypeName)?
+    FunctionDefinitionArgumentTuple <  '(' (FunctionDefinitionArgument (Spacing ',' Spacing FunctionDefinitionArgument)*)? ')'
+    FunctionDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
+
+    FunctionDefinitionBody <  ScopeStart FunctionBodyStmt* ScopeEnd
+    FunctionBodyStmt       <  ~TopLevelStmt
+                           /  ~ExprWOTLStmt # ExprTLStmt already contained in TopLevelStmt
+                           /  AssignStmt
+                           /  ReturnStmt
+                           /  AssertStmt
+                           /  PrintStmt
+
+    AssignStmt <  Name (':' TypeName)? '=' Expr
+    ReturnStmt <  KeywordStmt('return')
+    AssertStmt <  KeywordStmt('assert')
+    PrintStmt  <  KeywordStmt('print')
+
+    ExprClosure <  (FunctionDefinitionArgumentTuple / Name) :ClosureSigil Expr
+
+    ExprIfElse <  'if' ~ExprWOTLStmt IfScopeStart (Expr / AssignStmt)* ScopeEnd
+                  ('else' ScopeStart (Expr / AssignStmt)* ScopeEnd)?
+
+    # Tokens
+
+    ScopeStart <~ '{'
+    ScopeEnd   <~ '}'
+    IfScopeStart <~ ScopeStart
+
+    NamespaceSep <~ '.'
+
+    ReturnTypeSigil <~ '->'
+    ClosureSigil    <~ '->'
+
+    LineComment      <- "//" AllUntil(NewLine)
+    MultiLineComment <- "/*" ~(MultiLineComment / Text)* "*/"
+
+    DiscardableComments <- LineComment
+                        /  MultiLineComment
+
+    Text <~ (!("/*" / "*/") .)*
+
+    AnyCharButLF <~ !NewLine .
+
+    NewLine <- '\n' / '\r\n'
+    Spacing <: (blank+ / DiscardableComments)*
+    ExplicitSpacing <: (blank+ / DiscardableComments)+
+
+    EscapeSequence <~ backslash ( quote
+                                / doublequote
+                                / backslash
+                                / [abfnrtv]
+                                )
+
+    # Parameterized rules
+
+    KeywordStmt(Keyword) <- Keyword :ExplicitSpacing Expr
+    Escapeable(Char) <- EscapeSequence
+                     /  !Char .
+
+    # Stolen from the docs ^^
+    MaybeList(Elem, Sep)       <~ (Elem (Spacing :Sep Spacing Elem)*)?
+    List(Elem, Sep)            <~ Elem (Spacing :Sep Spacing Elem)*
+    NoDiscardList(Elem, Sep)   <~ Elem (Spacing Sep Spacing Elem)*
+    Until(Expr, Pred)          <- (!Pred Expr)*
+    AllUntil(Pred)             <~ Until(., Pred)
