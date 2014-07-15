@@ -31,14 +31,20 @@ AnLang:
             /
                 # Non-statement expressions
                 (
+                / ExprArray
                 / ExprIfElse
                 / ExprClosure
+                / ExprString
                 / SymbolName
                 )
             ) ExprFollowUps?
     ExprFollowUps <
                   /  InfixExprSuffix+
-                  /  (ExprPropertyAccess / FuncCallArgumentTuple)+
+                  /  (
+                     / ExprPropertyAccess
+                     / FuncCallArgumentTuple
+                     / ArrayAccess
+                     )+
 
     SymbolName <  ;Name
 
@@ -80,13 +86,18 @@ AnLang:
     InfixExprSuffix <  '`' QualName '`' Expr
 
     ExprFuncCall <  QualName FuncCallArgumentTuple
-    FuncCallArgumentTuple < '(' (FuncCallArgument (',' :Spacing FuncCallArgument)*)? ')'
+    FuncCallArgumentTuple <  '(' (FuncCallArgument (',' :Spacing FuncCallArgument)*)? ')'
     FuncCallArgument <
                      /  Name '=' Expr
                      /  Expr
 
     ExprPropertyAccess <  '.' Name
 
+    ExprArray   <  '[' (ArrayValue (:Spacing ',' :Spacing ArrayValue)* ','?)? ']'
+    ArrayValue  <  Name '=' Expr / Expr
+    ArrayAccess <  '[' (Expr (:Spacing ',' :Spacing Expr)*)? ']'
+
+    # Please do not put backquote strings in here - it's ambiguous with InfixExprSuffix
     ExprString <-
                /        quote Escapeables(      quote)       quote
                /  doublequote Escapeables(doublequote) doublequote
