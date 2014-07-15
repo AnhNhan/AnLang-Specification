@@ -19,21 +19,28 @@ AnLang:
               /  '[' TypeName? ']'
 
     TopLevelStmt <
-                 /  ~ExprTLStmt
+                 /  Definitions
                  /  Import
 
-    ExprTLStmt <-
-               /  ~Definitions
-    ExprWOTLStmt <-
-                 /  ExprIfElse
-                 /  ExprClosure
-                 /  QualName
-
-    Expr <- (ExprTLStmt / ExprWOTLStmt) ExprFollowUps?
+    Expr <- (
+                # Top-level statements
+                # Please do not put import in here
+                (
+                / Definitions
+                )
+            /
+                # Non-statement expressions
+                (
+                / ExprIfElse
+                / ExprClosure
+                / SymbolName
+                )
+            ) ExprFollowUps?
     ExprFollowUps <
                   /  InfixExprSuffix+
-                  /  FuncCallArgumentTuple+
-    InfixExprSuffix <  '`' QualName '`' Expr
+                  /  (ExprPropertyAccess / FuncCallArgumentTuple)+
+
+    SymbolName <  ;Name
 
     Import        <  'import ' QualName (':' ImportDetails)?
     ImportDetails <  ImportDetail (:Spacing ',' :Spacing ImportDetail)*
@@ -50,22 +57,27 @@ AnLang:
     FunctionDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
 
     FunctionDefinitionBody <  ScopeStart FunctionBodyStmt* ScopeEnd
-    FunctionBodyStmt       <  ~TopLevelStmt
-                           /  ~ExprWOTLStmt # ExprTLStmt already contained in TopLevelStmt
+    FunctionBodyStmt       <
                            /  AssignStmt
                            /  ReturnStmt
                            /  AssertStmt
                            /  PrintStmt
+                           /  Expr
 
-    AssignStmt <  Name (':' TypeName)? '=' Expr
-    ReturnStmt <  KeywordStmt('return')
-    AssertStmt <  KeywordStmt('assert')
-    PrintStmt  <  KeywordStmt('print')
+    # Note that we can assign imports to symbols
+    AssignStmt <  Name (':' TypeName)? '=' (Import / Expr)
+    ReturnStmt <  'return ' Expr
+    AssertStmt <  'assert ' Expr
+    PrintStmt  <  'print '  Expr
 
-    ExprClosure <  (FunctionDefinitionArgumentTuple / Name) :ClosureSigil Expr
+    ExprClosure <  (FunctionDefinitionArgumentTuple / Name) :ClosureSigil (ScopeStart Expr* ScopeEnd / Expr)
 
-    ExprIfElse <  'if ' ExprWOTLStmt  IfScopeStart (Expr / AssignStmt)* ScopeEnd
-                  ('else ' ScopeStart (Expr / AssignStmt)* ScopeEnd)?
+    ExprIfElse <  'if ' ExprCond IfScopeStart ExprIfBody ScopeEnd
+                  ('else ' ScopeStart ExprIfBody ScopeEnd)?
+    ExprCond   <  Expr
+    ExprIfBody <  (:Spacing FunctionBodyStmt)*
+
+    InfixExprSuffix <  '`' QualName '`' Expr
 
     ExprFuncCall <  QualName FuncCallArgumentTuple
     FuncCallArgumentTuple < '(' (FuncCallArgument (',' :Spacing FuncCallArgument)*)? ')'
@@ -73,11 +85,17 @@ AnLang:
                      /  Name '=' Expr
                      /  Expr
 
+    ExprPropertyAccess <  '.' Name
+
+    ExprString <-
+               /        quote Escapeables(      quote)       quote
+               /  doublequote Escapeables(doublequote) doublequote
+
     # Tokens
 
-    ScopeStart <~ '{'
-    ScopeEnd   <~ '}'
-    IfScopeStart <~ ScopeStart
+    ScopeStart <: '{'
+    ScopeEnd   <: '}'
+    IfScopeStart <: ScopeStart
 
     NamespaceSep <~ '.'
 
@@ -106,8 +124,7 @@ AnLang:
 
     # Parameterized rules
 
-    KeywordStmt(Keyword) <- Keyword :ExplicitSpacing Expr
-    Escapeable(Char) <- EscapeSequence
+    Escapeables(Char) <~ EscapeSequence
                      /  !Char .
 
     # Stolen from the docs ^^
