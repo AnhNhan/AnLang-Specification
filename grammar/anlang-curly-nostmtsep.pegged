@@ -9,11 +9,22 @@ AnLang:
 
     TypeName <-
              /  FunctionType
-             /  QualName ArrayLiteral+
-             /  QualName
+             /  MutableType
+             /  TemplateInstantiation ArrayLiteral*
+             /  QualName ArrayLiteral*
+
+    MutableType <  'mut' '(' TypeName ')'
 
     FunctionType <  'fn' '(' TypeTuple? ')' (:ReturnTypeSigil TypeName)?
     TypeTuple <  (TypeName (Spacing ',' Spacing TypeName)*)?
+
+    TemplateInstantiation <- Name '!' TemplateArguments
+    TemplateArguments     <-
+                          /  ExprString
+                          #  Note: We may mistake SymbolName with TypeName and similar other things here - resolve and
+                          #  fix it during semantic analysis
+                          /  '(' (:Spacing (TypeName / Expr) (:Spacing ',' :Spacing (TypeName / Expr))* :Spacing)? ')'
+                          /  Name
 
     ArrayLiteral <
               /  '[' TypeName? ']'
@@ -58,7 +69,7 @@ AnLang:
               # /  TypeDefinition
 
     FunctionDefinition              <  'fn ' FunctionDefinitionHeader FunctionDefinitionBody
-    FunctionDefinitionHeader        <  Name FunctionDefinitionArgumentTuple (ReturnTypeSigil TypeName)?
+    FunctionDefinitionHeader        <  Name (TemplateDefinitionArgumentTuple FunctionDefinitionArgumentTuple / FunctionDefinitionArgumentTuple) (ReturnTypeSigil TypeName)?
     FunctionDefinitionArgumentTuple <  '(' (FunctionDefinitionArgument (:Spacing ',' :Spacing FunctionDefinitionArgument)*)? ')'
     FunctionDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
 
@@ -69,6 +80,9 @@ AnLang:
                            /  AssertStmt
                            /  PrintStmt
                            /  Expr
+
+    TemplateDefinitionArgumentTuple < '(' (FunctionDefinitionArgument (:Spacing ',' :Spacing FunctionDefinitionArgument)*)? ')'
+    TemplateDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
 
     # Note that we can assign imports to symbols
     AssignStmt <  Name (':' TypeName)? '=' (Import / Expr)
@@ -93,14 +107,14 @@ AnLang:
 
     ExprPropertyAccess <  '.' Name
 
-    ExprArray   <  '[' (ArrayValue (:Spacing ',' :Spacing ArrayValue)* ','?)? ']'
+    ExprArray   <  '[' ','* (ArrayValue (:Spacing ','+ :Spacing ArrayValue)*)? ','* ']'
     ArrayValue  <  Name '=' Expr / Expr
     ArrayAccess <  '[' (Expr (:Spacing ',' :Spacing Expr)*)? ']'
 
     # Please do not put backquote strings in here - it's ambiguous with InfixExprSuffix
     ExprString <-
-               /        quote Escapeables(      quote)       quote
-               /  doublequote Escapeables(doublequote) doublequote
+               /        quote ~EscapedChar(      quote)*       quote
+               /  doublequote ~EscapedChar(doublequote)* doublequote
 
     # Tokens
 
@@ -135,8 +149,8 @@ AnLang:
 
     # Parameterized rules
 
-    Escapeables(Char) <~ EscapeSequence
-                     /  !Char .
+    EscapedChar(Char) <~ EscapeSequence
+                      /  !Char .
 
     # Stolen from the docs ^^
     MaybeList(Elem, Sep)       <~ (Elem (Spacing :Sep Spacing Elem)*)?
