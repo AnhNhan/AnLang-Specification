@@ -19,6 +19,7 @@ AnLang:
     TypeTuple <  (TypeName (Spacing ',' Spacing TypeName)*)?
 
     TemplateInstantiation <- Name '!' TemplateArguments
+    TemplateInstSuffix    <- '!' TemplateArguments
     TemplateArguments     <-
                           /  ExprString
                           #  Note: We may mistake SymbolName with TypeName and similar other things here - resolve and
@@ -27,25 +28,36 @@ AnLang:
                           /  Name
 
     ArrayLiteral <
-              /  '[' TypeName? ']'
+              /  '[' (Number / TypeName)? ']'
 
     TopLevelStmt <
                  /  Definitions
                  /  Import
+                 /  UnittestBlock
 
-    Expr <- (
+    Expr <-
                 # Top-level statements
                 # Please do not put import in here
-                (
+            (
                 / Definitions
-                )
+            )
             /
+            (
                 # Non-statement expressions
                 (
                 / ExprArray
                 / ExprIfElse
+                / ExprForeach
                 / ExprClosure
                 / ExprString
+                / ExprBoolNegate
+
+                # Not starting with special tokens, but with SymbolName / Number
+                # Place *before* parsing Number / SymbolName
+                / ExprRange
+
+                # Expressions really not starting with special tokens
+                / Number
                 / SymbolName
                 )
             ) ExprFollowUps?
@@ -55,6 +67,21 @@ AnLang:
                      / ExprPropertyAccess
                      / FuncCallArgumentTuple
                      / ArrayAccess
+                     / TemplateInstSuffix
+                     )+
+
+    # Sure it ain't Espresso Lite?
+    # Btw, once we have arithmetic expressions, add them here, too
+    ExprLight <- (
+                 /  Number
+                 /  SymbolName
+                 ) ExprLightFollowUps?
+    ExprLightFollowUps <
+                  /  (
+                     / ExprPropertyAccess
+                     / FuncCallArgumentTuple
+                     / ArrayAccess
+                     / TemplateInstSuffix
                      )+
 
     SymbolName <  ;Name
@@ -65,11 +92,17 @@ AnLang:
 
     Definitions <  FunctionDefinition
               # /  TupleDefinition
-              # /  StructDefinition
+                /  StructDefinition
               # /  TypeDefinition
 
-    FunctionDefinition              <  'fn ' FunctionDefinitionHeader FunctionDefinitionBody
-    FunctionDefinitionHeader        <  Name (TemplateDefinitionArgumentTuple FunctionDefinitionArgumentTuple / FunctionDefinitionArgumentTuple) (ReturnTypeSigil TypeName)?
+    UnittestBlock < 'unittest' UnittestBody
+    UnittestBody  < ScopeStart FunctionBodyStmt* ScopeEnd
+
+    Attribute  <- '@' Name FuncCallArgumentTuple?
+    Attributes <  Attribute+
+
+    FunctionDefinition              <  Attributes? 'fn ' FunctionDefinitionHeader FunctionDefinitionBody
+    FunctionDefinitionHeader        <  Name (TemplateDefinitionArgumentTuple FunctionDefinitionArgumentTuple / FunctionDefinitionArgumentTuple) (:ReturnTypeSigil TypeName)?
     FunctionDefinitionArgumentTuple <  '(' (FunctionDefinitionArgument (:Spacing ',' :Spacing FunctionDefinitionArgument)*)? ')'
     FunctionDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
 
@@ -79,7 +112,23 @@ AnLang:
                            /  ReturnStmt
                            /  AssertStmt
                            /  PrintStmt
+                           /  Import
+                           /  UnittestBlock
                            /  Expr
+
+    StructDefinition <  Attributes? 'struct ' Name TemplateDefinitionArgumentTuple? StructDefinitionBody
+    StructDefinitionBody <  ScopeStart StructBodyStmt* ScopeEnd
+    StructBodyStmt <
+                   /  PropertyFunctionDefinition
+                   /  BehaviorFunctionDefinition
+                   /  FunctionDefinition
+                   /  UnittestBlock
+                   /  DataStructMember
+
+    BehaviorFunctionDefinition <  Attributes? 'behavior ' FunctionDefinitionHeader FunctionDefinitionBody
+    PropertyFunctionDefinition <  Attributes? 'property ' FunctionDefinitionHeader (ReturnStmt / FunctionDefinitionBody)
+
+    DataStructMember <- Name (':' TypeName)? ('=' Expr)?
 
     TemplateDefinitionArgumentTuple < '(' (FunctionDefinitionArgument (:Spacing ',' :Spacing FunctionDefinitionArgument)*)? ')'
     TemplateDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
@@ -92,20 +141,28 @@ AnLang:
 
     ExprClosure <  (FunctionDefinitionArgumentTuple / Name) :ClosureSigil (ScopeStart Expr* ScopeEnd / Expr)
 
+    ExprBoolNegate <- '!' ExprLight
+
     ExprIfElse <  'if ' ExprCond IfScopeStart ExprIfBody ScopeEnd
-                  ('else ' ScopeStart ExprIfBody ScopeEnd)?
-    ExprCond   <  Expr
-    ExprIfBody <  (:Spacing FunctionBodyStmt)*
+                  ('else' ScopeStart ExprIfBody ScopeEnd)?
+    ExprCond   <- Expr
+    ExprIfBody <- (:Spacing FunctionBodyStmt)*
 
-    InfixExprSuffix <  '`' QualName '`' Expr
+    ExprForeach <  'foreach ' ForeachLoopParams 'in ' Expr ExprForeachBody ('end_foreach' ExprForeachBody)?
+    ExprForeachBody <- ScopeStart (:Spacing FunctionBodyStmt)* :Spacing ScopeEnd
+    ForeachLoopParams <- Name (:Spacing ',' :Spacing Name)*
 
-    ExprFuncCall <  QualName FuncCallArgumentTuple
+    InfixExprSuffix <- :Spacing '`' QualName TemplateInstSuffix? '`' :Spacing Expr
+
+    ExprFuncCall <- QualName FuncCallArgumentTuple
     FuncCallArgumentTuple <  '(' (FuncCallArgument (',' :Spacing FuncCallArgument)*)? ')'
     FuncCallArgument <
                      /  Name '=' Expr
                      /  Expr
 
-    ExprPropertyAccess <  '.' Name
+    ExprPropertyAccess <- '.' Name
+
+    ExprRange <- ExprLight '..' ExprLight
 
     ExprArray   <  '[' ','* (ArrayValue (:Spacing ','+ :Spacing ArrayValue)*)? ','* ']'
     ArrayValue  <  Name '=' Expr / Expr
@@ -124,8 +181,20 @@ AnLang:
 
     NamespaceSep <~ '.'
 
-    ReturnTypeSigil <~ '->'
-    ClosureSigil    <~ '->'
+    ReturnTypeSigil <: '->'
+    ClosureSigil    <: '->'
+
+    Number <-
+           /  HexNumbers
+           /  OctalNumbers
+           /  BinaryNumbers
+           /  DecimalNumbers FloatingPointSuffix?
+
+    HexNumbers          <- :'0x' ([0-9a-zA-Z_])+
+    OctalNumbers        <- :'0o' ([0-7_])+
+    BinaryNumbers       <- :'0b' ('0' / '1' / '_')+
+    DecimalNumbers      <- ~([0-9_])+
+    FloatingPointSuffix <- :'.' ~DecimalNumbers+
 
     LineComment      <- "//" AllUntil(NewLine)
     MultiLineComment <- "/*" ~(MultiLineComment / Text)* "*/"
