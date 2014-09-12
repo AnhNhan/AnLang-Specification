@@ -1,134 +1,63 @@
 Introduction
 ============
 
-**AnLang** is a functional and dynamic object-oriented language. It actually
-began as a PHP rip-off (that means it could have been implemented as an
-extension), but quickly evolved into its current state you can see today
-(being a total Python/Ruby rip-off, languages I have no idea how to write
-extensions).
+The only thin I have to say about this reference:
 
-It provides a convenience environment (not convenient, though it applies). It
-removes many redundant/unneeded elements from overblown/overfucked languages
-like the plentiful braces from C/C++/Java/PHP, the main method from C/C++/Java
-and copy/paste getters/setters, as well as eliminates the thought of having to
-exterminate bad coding styles as AnLang enforces a basic common coding style
-everybody should share an agreeing thought with.
+This language is not specified by its syntax. The syntax is specified by the implementation.
 
-Basic Syntax
-============
+Instead, we simply describe language features and implementation behaviors here. These implementations will then provide a valid abstract syntax tree to the AnLang middleware, which interfaces with one or more compiler / execution back-ends.
 
-Try out the basics!
+If you want to stick to the syntax of the reference implementation, that's fine by me.
+
+Reading this doc
+================
+
+The only convention you have to know so far: Functions that operate on a certain type get written like this: `#foo(arg1, arg2)`. People might know this as `Bar#foo(arg1, arg2)` or even `Bar::foo(arg1, arg2)` from Java, Perl, PHP etc.. We leave the type away, since it's kind of obvious any way. And we actually do some special kind of stuff to it (our functions aren't attached to types).
+
+Workings of AnLang
+==================
 
 ```
-print "Hello World!"
+     Lexer    Parser                     Semantic Analysis                 Optimization       Linking
+        [Front-end]            Reflection  [AnLang Middle-end]                [Compiler Back-end]
+  Macro Processing               Code assembly      Type processing         Executable Creation
+        Syntactic sugaring
 ```
 
-It's easy as that. Ok, it looks like Python, I know. Try this!
+## Front-end
 
-```
-println "Hello World!"
-echoln "Hello World!"
-```
+### Lexer & Parser
 
-I'm overdoing it, I know. Let's try something more intriguing!
+Provides custom syntax, transforms into an intermediate AST.
 
-```
-define function printtwice($text):
-    println $text . $text
-    println "Printed it twice as requested"
+### Macro processing
 
-printtwice("Hello World!")
+Stuff like pattern matching code, property and behavior functions get expanded.
 
-// Short loop syntax
-repeat twice: print "Exaggerating everything"
-```
+### Syntactic sugaring
 
-And we got more!
+Rewrites syntactic sugar to regular code. Infix function calls get rewritten as regular function calls, operator overloads and runtime data types (e.g. associative arrays) get resolved.
 
-```
-$someStr = "A totally random string"
+## AnLang Middle-end
 
-/*
- * RandomSource reads from either /dev/urandom (UNIX), CAPICOM (Windows) or
- * OpenSSL (both) in this order.
- *
- * This is a static method invocation, btw
- */
-$someReallyRandomString = RandomSource::readChars(64)
+The middle-end is passed the processed AST. The actual mechanics behind AnLang grind their gears here.
 
-if $someStr eq $someReallyRandomString then
-    print "You are damn lucky today..."
-    for infinite times
-        print "."
-else
-    print "Not so lucky, try again!"
-```
+### Code assembly
 
-I hear you want some OO?
+Generates & instantiates templates, resolves conditional compilation branches, assembles unit tests and debug code.
 
-```
-Token:
-    // Properties/Attributes/Object variables/however you call them are private
-    // by default
-    // The `@get` instructs the interpreter to generate a getter `getName`
-    // You can do `@set` and some more, too
-    prop $name: @get
-    prop $string: @get
+Later also generates the code for the back-end.
 
-    // The :-prefix instructs the generated constructor to automatically assign
-    // `$name` to `this.name`. Useful, hm?
-    behaviour __create__ (:$name, :$string)
+### Semantic Analysis
 
-Tokenizer:
-    prop list $tokenList: @get
+Checks types and annotations for soundness. Pure functions only do pure stuff, all values pass type constraints, no impossible operations (e.g. structs without `opCall` getting invoked).
 
-    behaviour __create__ (list :$tokenList)
+### Reflection
 
-    matchNextToken($text):
-        iterate this.getTokenList as $tokenName => $tokenString
-            if $tokenString->ncmp($text) sameas 0 then
-                $matchedString = $tokenString[0..$]
-                return Token($tokenName, $matchedString)
+### Type processing
 
-        // No matched token
-        return false
+Quasi-monad resolving. Reflections gets done, attributes processed etc.
 
-    tokenize($text):
-        list $tokens
-        for $text.length times
-            $token = this.matchNextToken($text)
-            if not $token then
-                // Some wild data, we don't care about it for now
-                break
-            $tokens[] = $token
-            $text = $text[0..$token.getString.length]
-        return $tokens
-```
+## Compiler Back-end
 
-Now, let's use this `Tokenizer` object we just created.
-
-```
-// Initialize a dictionary
-list $tokenList = [
-    "t_TEXT_HI" => "hi",
-    "t_COMMA" => ",",
-    "t_SPACE" => " ",
-    "t_TEXT_THERE" => "there",
-    "t_EXCL" => "!",
-]
-
-$tokenizer = Tokenlist($tokenList)
-
-// One way to assign a value to a variable
-$stringToBeTokenized = "hi, there!"
-
-// Another way to assign a value to a variable
-$tokens = $tokenizer.tokenize($stringToBeTokenized)
-
-iterate $tokens as Token $token
-    println "Token {$token->getName}: {$token->getString}"
-```
-
-Regarding the last print statement: PHP guys may remember (and probably love)
-that variable embed syntax well, while non-PHP guys may hate it. Yes, it works
-in **AnLang**, though the curly braces are mandatory.
+Communicates with GCC, LLVM or whatever we use on the backend. Figures out optimizations, links in external libraries, creates the executable, etc.

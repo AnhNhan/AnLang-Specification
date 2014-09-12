@@ -124,12 +124,13 @@ fn map(T : InputRange)(range : T, fun : fn(ElementType!T))
     struct MapRange
     {
         source : T
-        front
+
+        property empty() return source.empty
+        property front() return fun(source)
 
         fn popFront()
         {
             source.popFront()
-            front = fun(source.front)
         }
     }
 

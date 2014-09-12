@@ -1,10 +1,10 @@
 
 type SafeHtml
     where this.isSafeHtml eq true
-    supports stringof
+    has behavior stringof
 
 type HtmlTagContents
-    where this.type matches
+    where type matches
         string
       | SafeHtml
       | null
@@ -46,7 +46,7 @@ struct HtmlTag
 
         contents ~= _contents
 
-    behaviour stringof
+    behavior stringof
         rendered_options = ''
         foreach name, value in options
             rendered_options ~= ' ' ~ _html_escape(name)

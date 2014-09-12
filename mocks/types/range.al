@@ -1,6 +1,12 @@
 
 module range
 
+/++
+  The range primitive. A type primitive allowing the traversal of
+  nearly any data-type.
+
+  Any type that fulfills these constraints is considered a range.
+ +/
 type InputRange
 {
     has fn popFront()
@@ -18,7 +24,7 @@ type OutputRange(E)
     has fn put(E)
 }
 
-type ForwardType
+type ForwardRange
 {
     also InputRange
     has property save -> typeof(this)
@@ -38,7 +44,9 @@ type BidirectionalRange
     }
 }
 
-// TODO: Error handling
+/++
+  Evaluates to the element type of a range.
+  +/
 alias ElementType(T) = typeof(T.init.front.init)
 
 // Allowing to access arrays with the input range interface

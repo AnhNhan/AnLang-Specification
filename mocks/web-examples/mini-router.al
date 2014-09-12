@@ -4,7 +4,7 @@
 
 fn split_in_parts(url)
 {
-    return url.trim(' /').split('/')
+    return url.trim(' ', '/').split('/')
 }
 
 fn matches(url, pattern)
@@ -12,7 +12,7 @@ fn matches(url, pattern)
     url_parts     = url.split_in_parts
     pattern_parts = pattern.split_in_parts
 
-    if not url_parts.count eq pattern_parts
+    if url_parts.length not eq pattern_parts.length
     {
         return false
     }
@@ -20,9 +20,9 @@ fn matches(url, pattern)
     foreach index, pattern_part in pattern_parts
     {
         // We don't need to worry about variables, so skip them
-        if not pattern_part[0] eq ':'
+        if pattern_part[0] not eq ':'
         {
-            if not pattern_part eq url_parts[index]
+            if pattern_part not eq url_parts[index]
             {
                 // Non-variable does not match
                 return false
@@ -64,8 +64,6 @@ struct Route
     pattern    : string
     controller : callable
 
-    this(@pattern, @controller)
-
     fn process(url)
     {
         // callable.call_v takes an array of values and uses these as
@@ -78,9 +76,9 @@ struct Router
 {
     routes : Route[]
 
-    fn route(Route route)
+    fn route(route)
     {
-        routes[] = route
+        routes ~= route
     }
 
     fn process(url)
@@ -99,15 +97,18 @@ struct Router
 
 fn to(pattern, controller)
 {
-    return Route pattern, controller
+    return Route(pattern, controller)
 }
 
-fn main()
+unittest
 {
-    router = Router
+    router = Router()
 
     router `route` ''            `to` ()     -> 'Hello, World!'
     router `route` 'hello/:name' `to` (name) -> 'Hello, %s!' `format` name
+
+    router.route('hello/:name'.to(name -> 'Hello, %s!'.format(name)))
+    route(router, to('hello/:name', name -> format('Hello, %s!', name)))
 
     println router `process` ''
     println router `process` 'hello/Rowan Atkinson'

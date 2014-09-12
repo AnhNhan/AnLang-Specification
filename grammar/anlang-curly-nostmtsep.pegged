@@ -1,8 +1,8 @@
 
 AnLang:
-    AnLang <  ModuleDeclaration? TopLevelStmt* endOfInput
+    AnLang <  (DocBlockComment? ModuleDeclaration)? TopLevelStmt TopLevelStmt TopLevelStmt TopLevelStmt TopLevelStmt endOfInput
 
-    ModuleDeclaration <  'module ' QualName
+    ModuleDeclaration <;  :'module ' QualName
 
     Name <- ;identifier
     QualName <- ;NoDiscardList(Name, NamespaceSep)
@@ -28,7 +28,7 @@ AnLang:
                           /  Name
 
     ArrayLiteral <
-              /  '[' (Number / TypeName)? ']'
+                 /  '[' (Number / TypeName)? ']'
 
     TopLevelStmt <
                  /  Definitions
@@ -48,9 +48,19 @@ AnLang:
                 / ExprArray
                 / ExprIfElse
                 / ExprForeach
-                / ExprClosure
                 / ExprString
                 / ExprBoolNegate
+                / ExprCompare
+                / ExprArith
+
+                # For whatever reason Pegged mixes these up with ExprClosure,
+                # so I disabled these.
+                #
+                (
+                    / ExprClosure
+                    / ExprSingleParenthizedExpr
+                    / ExprTuple
+                )
 
                 # Not starting with special tokens, but with SymbolName / Number
                 # Place *before* parsing Number / SymbolName
@@ -71,10 +81,10 @@ AnLang:
                      )+
 
     # Sure it ain't Espresso Lite?
-    # Btw, once we have arithmetic expressions, add them here, too
     ExprLight <- (
                  /  Number
                  /  SymbolName
+                 # /  ExprLightSingleParenthizedExpr
                  ) ExprLightFollowUps?
     ExprLightFollowUps <
                   /  (
@@ -101,7 +111,7 @@ AnLang:
     Attribute  <- '@' Name FuncCallArgumentTuple?
     Attributes <  Attribute+
 
-    FunctionDefinition              <  Attributes? 'fn ' FunctionDefinitionHeader FunctionDefinitionBody
+    FunctionDefinition              <  DocBlockComment? Attributes? 'fn ' FunctionDefinitionHeader FunctionDefinitionBody
     FunctionDefinitionHeader        <  Name (TemplateDefinitionArgumentTuple FunctionDefinitionArgumentTuple / FunctionDefinitionArgumentTuple) (:ReturnTypeSigil TypeName)?
     FunctionDefinitionArgumentTuple <  '(' (FunctionDefinitionArgument (:Spacing ',' :Spacing FunctionDefinitionArgument)*)? ')'
     FunctionDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
@@ -111,12 +121,13 @@ AnLang:
                            /  AssignStmt
                            /  ReturnStmt
                            /  AssertStmt
+                           /  StaticStmt(AssertStmt)
                            /  PrintStmt
                            /  Import
                            /  UnittestBlock
                            /  Expr
 
-    StructDefinition <  Attributes? 'struct ' Name TemplateDefinitionArgumentTuple? StructDefinitionBody
+    StructDefinition <  DocBlockComment? Attributes? 'struct ' Name TemplateDefinitionArgumentTuple? StructDefinitionBody
     StructDefinitionBody <  ScopeStart StructBodyStmt* ScopeEnd
     StructBodyStmt <
                    /  PropertyFunctionDefinition
@@ -134,14 +145,49 @@ AnLang:
     TemplateDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
 
     # Note that we can assign imports to symbols
-    AssignStmt <  Name (':' TypeName)? '=' (Import / Expr)
+    AssignStmt <  Name (':' TypeName)? AssignOperator (Import / Expr)
+    AssignOperator <-
+                   /  '='
+                   /  '~='
+                   /  '+='
+                   /  '-='
+                   /  '*='
+                   /  '/='
+                   /  '|='
+                   /  '^='
+                   /  '<<='
+                   /  '>>='
     ReturnStmt <  'return ' Expr
     AssertStmt <  'assert ' Expr
     PrintStmt  <  'print '  Expr
 
+    StaticStmt(Stmt) < 'static ' Stmt
+    StaticStuff <-
+                /  StaticStmt(AssertStmt)
+
+    ExprSingleParenthizedExpr      <- '(' Expr ')' &!ClosureSigil
+    ExprLightSingleParenthizedExpr <- '(' ExprLight ')' &!ClosureSigil
+
+    ExprTuple <  '(' Expr ',' (:Spacing Expr :Spacing ',')* ')'
+
     ExprClosure <  (FunctionDefinitionArgumentTuple / Name) :ClosureSigil (ScopeStart Expr* ScopeEnd / Expr)
 
     ExprBoolNegate <- '!' ExprLight
+    ExprCompare <-
+                   ExprLight
+                   ^(
+                     / ' lt '
+                     / ' lte'
+                     / ' gt '
+                     / ' gte '
+                     / ' not eq '
+                     / ' eq '
+                   )
+                   ExprLight
+
+    ExprArith < ArithAddMinus / ArithMultDiv
+    ArithAddMinus < (ArithMultDiv / ExprLight) ^('+' / '-') (ArithMultDiv / ExprLight)
+    ArithMultDiv  < ExprLight ^('*' / '/') ExprLight
 
     ExprIfElse <  'if ' ExprCond IfScopeStart ExprIfBody ScopeEnd
                   ('else' ScopeStart ExprIfBody ScopeEnd)?
@@ -162,7 +208,7 @@ AnLang:
 
     ExprPropertyAccess <- '.' Name
 
-    ExprRange <- ExprLight '..' ExprLight
+    ExprRange <- (ExprArith / ExprLight) '..' (ExprArith / ExprLight)
 
     ExprArray   <  '[' ','* (ArrayValue (:Spacing ','+ :Spacing ArrayValue)*)? ','* ']'
     ArrayValue  <  Name '=' Expr / Expr
@@ -193,8 +239,11 @@ AnLang:
     HexNumbers          <- :'0x' ([0-9a-zA-Z_])+
     OctalNumbers        <- :'0o' ([0-7_])+
     BinaryNumbers       <- :'0b' ('0' / '1' / '_')+
-    DecimalNumbers      <- ~([0-9_])+
+    DecimalNumbers      <- (^'-')? ~([0-9_])+
     FloatingPointSuffix <- :'.' ~DecimalNumbers+
+
+    # Do not put this into Spacing. It's supposed to be in the AST.
+    DocBlockComment <- "/++" ~(DocBlockComment / (!("/++" / "+/") .)*)* "+/"
 
     LineComment      <- "//" AllUntil(NewLine)
     MultiLineComment <- "/*" ~(MultiLineComment / Text)* "*/"

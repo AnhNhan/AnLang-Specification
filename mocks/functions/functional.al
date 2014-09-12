@@ -33,7 +33,7 @@ fn map(T : InputRange)(range : T, fun : fn(ElementType!T))
         source
 
         property empty() return source.empty
-        property front() return fun(source)
+        property front() return fun(source.front)
 
         fn popFront()
         {
@@ -58,7 +58,7 @@ fn reduce(T : InputRange)(range : T, fun : fn(ElementType!T, ElementType!T) -> E
 
         // Wraps any kind of creation event. In this case, the default
         // constructor for structs gets run, then this behavior is invoked.
-        behavior create
+        behavior create()
         {
             source.popFront()
         }
