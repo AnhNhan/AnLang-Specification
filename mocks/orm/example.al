@@ -21,6 +21,8 @@ enum RelationType
     OneToMany,
     ManyToMany,
 }
+// or
+enum RelationType = of oneToOne | oneToMany | manyToMany
 
 struct Relationship
 {
@@ -35,6 +37,8 @@ type EntityFieldType
       Column
     | Relationship
 }
+// or
+type EntityFieldType = Column | Relationship
 
 struct Entity(_name, _fields)
 {

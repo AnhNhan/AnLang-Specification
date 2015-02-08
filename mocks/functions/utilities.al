@@ -8,20 +8,32 @@ fn id(thing)
 }
 
 /// Curries in the first arg
-fn curry_fa(callable fun)(first_arg)
+fn curry_fa(fun : fn)(first_arg)
 {
     // Making use of variadic parameters and static array unpacking
     return (args ...) -> fun(first_arg, ... args)
 }
 
 /// A variant of the map function to pull deep things from a range into arrays
-fn pull(callable value_pred : fn (ElementType!ListType), ListType : InputRange)(list : ListType)
+/// I just noticed that this is simply a fancy version of the map function (it's adapted from mpull)
+fn pull(value_pred : fn (ElementType!ListType), ListType : InputRange)(list : ListType)
 {
     result : returnof(value_pred)[] = []
 
     foreach value in list
     {
         result ++= value_pred(value)
+    }
+    return result
+}
+
+fn pull_real(member)(objs)
+{
+    result : typeof(objs.front.{member}) = []
+
+    foreach obj in list
+    {
+        result ++= obj.{member}
     }
     return result
 }
@@ -40,20 +52,17 @@ unittest
     ]
 
     assert input.pull!(x -> x.num) == [3, 5, 7]
+    assert input.pull_real!'num' == [3, 5, 7]
 }
 
 /// Group things by a predicate
-fn group(callable value_pred : fn (ElementType!ListType), ListType : InputRange)(list : ListType)
+fn group(value_pred : fn (ElementType!ListType), ListType : InputRange)(list : ListType)
 {
     map = pull!value_pred(list)
 
     // Arrays of elements, contained in a dictionary keyed by map elements
-    groups : ElementType!list[][ElementType!map] = []
-    // Pre-allocating groups
-    foreach group in map
-    {
-        groups[group] = []
-    }
+    // It's pre-allocated
+    groups : ElementType!list[][ElementType!map] = map.map!((group) -> return (group, [])).assocArray
 
     foreach key => group in map
     {

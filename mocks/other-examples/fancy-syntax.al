@@ -1,16 +1,5 @@
 
 // translated from a == x ? a : b
-
-fn when(t, fun_ret: Either!(t, any))(value: t, maybe: fn(t) -> fun_ret) -> fun_ret
-{
-    return maybe(value)
-}
-
-fn else(t, u)(pred: fn(t) -> bool, alternative: u) -> fn(t) -> Either!(t, u)
-{
-    return value -> if pred { return value } else { return alternative }
-}
-
 unittest
 {
     f= a `when` ´eq x´ `else` b
@@ -23,11 +12,14 @@ unittest
 {
     // Function piping
     // Think it clashes with boolean / bitwise OR?
-    // That's easy, we don't even have that!
+    // That's easy, we don't even have bitwise operators!
     lines = 'foo.txt'
         | std.file.read
         | split('\n')
         | map!trim
+    // Using #=> instead would make for some good jokes!
+
+    // Old-school
 
     import std.algorithm : map
     import std.file : read
@@ -36,16 +28,32 @@ unittest
 
     lines = 'foo.txt'.read.split('\n').map!trim
 
-    // Conclusion: I don't think this has a point here except for namespaced symbols
+    // Conclusion: I don't think this has a point here except for namespaced symbols. And jokes.
 }
 
 unittest
 {
     // Holy Grail type-safe sprintf?
 
+    print format!'Hello, %s!'('Rowan Atkinson')
+
     alias greet = format!'Hello, %s!'
     print greet('Rowan Atkinson')
 
     alias happybirthday = format!'Happy Birthday to your %2$dth birthday, %1$s!'
     print happybirthday('Rowan Atkinson', 59) // It's 2014 fyi
+
+    alias writtenby = format!'"%s" (by %s)'
+    print 'Dracula'.writtenby('Bram Stoker')
+}
+
+template format(format-template: String)
+{
+    args = format-template
+        .matchall(/(<!=%)%(.*?([a-z]))/)
+        .map(match -> match => match[2].translate([
+                's' => Stringable,
+                'd' => Integer|Float,
+            ]))
+        .zipEntries // {Key=>Obj*} -> Map<Key, Obj>
 }

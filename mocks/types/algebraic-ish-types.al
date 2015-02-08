@@ -1,7 +1,7 @@
 
 module mocks.types.algebraic_ish_types
 
-// Templated type
+// Either(Left, Right) <==> Result(T, E) ?
 type Either(A, B)
 {
     where type matches
@@ -22,9 +22,6 @@ type Just(T)
 type Maybe(T)
 {
     encapsule Either!(T, Nothing)
-    where type matches
-        Just!T
-      | Nothing
 }
 
 fn do_something(val : number) -> Maybe!number
@@ -44,8 +41,8 @@ unittest
     num1 = 5
     num2 = 0
 
-    conv1 = convert_to_maybe(num1)
-    conv2 = convert_to_maybe(num2)
+    conv1 = do_something(num1)
+    conv2 = do_something(num2)
 
     assert conv1 eq 10
     assert conv2 is Nothing
