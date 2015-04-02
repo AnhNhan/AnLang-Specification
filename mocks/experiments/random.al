@@ -107,6 +107,13 @@ fn stuff()
     c
 }
 
+fn stuff() #random #deprecated #text('foo')
+{
+    a
+    b
+    c
+}
+
 // Inspired by .Net (C#, F#)
 [Random Deprecated Text('foo')]
 fn stuff()
