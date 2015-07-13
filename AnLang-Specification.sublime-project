@@ -1,0 +1,17 @@
+{
+    "folders": [
+        {
+            "path": "source",
+            "name": "AnLang-spec Source"
+        },
+        {
+            "folder_exclude_patterns":
+            [
+                "AnLang-Specification/source"
+            ],
+            "follow_symlinks": true,
+            "name": "AnLang-spec Root",
+            "path": "."
+        }
+    ]
+}
