@@ -1,0 +1,278 @@
+
+AnLang:
+    AnLang <  (DocBlockComment? ModuleDeclaration)? TopLevelStmt TopLevelStmt TopLevelStmt TopLevelStmt TopLevelStmt endOfInput
+
+    ModuleDeclaration <;  :'module ' QualName
+
+    Name <- ;identifier
+    QualName <- ;NoDiscardList(Name, NamespaceSep)
+
+    TypeName <-
+             /  FunctionType
+             /  MutableType
+             /  TemplateInstantiation ArrayLiteral*
+             /  QualName ArrayLiteral*
+
+    MutableType <  'mut' '(' TypeName ')'
+
+    FunctionType <  'fn' '(' TypeTuple? ')' (:ReturnTypeSigil TypeName)?
+    TypeTuple <  (TypeName (Spacing ',' Spacing TypeName)*)?
+
+    TemplateInstantiation <- Name '!' TemplateArguments
+    TemplateInstSuffix    <- '!' TemplateArguments
+    TemplateArguments     <-
+                          /  ExprString
+                          #  Note: We may mistake SymbolName with TypeName and similar other things here - resolve and
+                          #  fix it during semantic analysis
+                          /  '(' (:Spacing (TypeName / Expr) (:Spacing ',' :Spacing (TypeName / Expr))* :Spacing)? ')'
+                          /  Name
+
+    ArrayLiteral <
+                 /  '[' (Number / TypeName)? ']'
+
+    TopLevelStmt <
+                 /  Definitions
+                 /  Import
+                 /  UnittestBlock
+
+    Expr <-
+                # Top-level statements
+                # Please do not put import in here
+            (
+                / Definitions
+            )
+            /
+            (
+                # Non-statement expressions
+                (
+                / ExprArray
+                / ExprIfElse
+                / ExprForeach
+                / ExprString
+                / ExprBoolNegate
+                / ExprCompare
+                / ExprArith
+
+                # For whatever reason Pegged mixes these up with ExprClosure,
+                # so I disabled these.
+                #
+                (
+                    / ExprClosure
+                    / ExprSingleParenthizedExpr
+                    / ExprTuple
+                )
+
+                # Not starting with special tokens, but with SymbolName / Number
+                # Place *before* parsing Number / SymbolName
+                / ExprRange
+
+                # Expressions really not starting with special tokens
+                / Number
+                / SymbolName
+                )
+            ) ExprFollowUps?
+    ExprFollowUps <
+                  /  InfixExprSuffix+
+                  /  (
+                     / ExprPropertyAccess
+                     / FuncCallArgumentTuple
+                     / ArrayAccess
+                     / TemplateInstSuffix
+                     )+
+
+    # Sure it ain't Espresso Lite?
+    ExprLight <- (
+                 /  Number
+                 /  SymbolName
+                 # /  ExprLightSingleParenthizedExpr
+                 ) ExprLightFollowUps?
+    ExprLightFollowUps <
+                  /  (
+                     / ExprPropertyAccess
+                     / FuncCallArgumentTuple
+                     / ArrayAccess
+                     / TemplateInstSuffix
+                     )+
+
+    SymbolName <  ;Name
+
+    Import        <  'import ' QualName (':' ImportDetails)?
+    ImportDetails <  ImportDetail (:Spacing ',' :Spacing ImportDetail)*
+    ImportDetail  <  Name ('=' Name)?
+
+    Definitions <  FunctionDefinition
+              # /  TupleDefinition
+                /  StructDefinition
+              # /  TypeDefinition
+
+    UnittestBlock < 'unittest' UnittestBody
+    UnittestBody  < ScopeStart FunctionBodyStmt* ScopeEnd
+
+    Attribute  <- '@' Name FuncCallArgumentTuple?
+    Attributes <  Attribute+
+
+    FunctionDefinition              <  DocBlockComment? Attributes? 'fn ' FunctionDefinitionHeader FunctionDefinitionBody
+    FunctionDefinitionHeader        <  Name (TemplateDefinitionArgumentTuple FunctionDefinitionArgumentTuple / FunctionDefinitionArgumentTuple) (:ReturnTypeSigil TypeName)?
+    FunctionDefinitionArgumentTuple <  '(' (FunctionDefinitionArgument (:Spacing ',' :Spacing FunctionDefinitionArgument)*)? ')'
+    FunctionDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
+
+    FunctionDefinitionBody <  ScopeStart FunctionBodyStmt* ScopeEnd
+    FunctionBodyStmt       <
+                           /  AssignStmt
+                           /  ReturnStmt
+                           /  AssertStmt
+                           /  StaticStmt(AssertStmt)
+                           /  PrintStmt
+                           /  Import
+                           /  UnittestBlock
+                           /  Expr
+
+    StructDefinition <  DocBlockComment? Attributes? 'struct ' Name TemplateDefinitionArgumentTuple? StructDefinitionBody
+    StructDefinitionBody <  ScopeStart StructBodyStmt* ScopeEnd
+    StructBodyStmt <
+                   /  PropertyFunctionDefinition
+                   /  BehaviorFunctionDefinition
+                   /  FunctionDefinition
+                   /  UnittestBlock
+                   /  DataStructMember
+
+    BehaviorFunctionDefinition <  Attributes? 'behavior ' FunctionDefinitionHeader FunctionDefinitionBody
+    PropertyFunctionDefinition <  Attributes? 'property ' FunctionDefinitionHeader (ReturnStmt / FunctionDefinitionBody)
+
+    DataStructMember <- Name (':' TypeName)? ('=' Expr)?
+
+    TemplateDefinitionArgumentTuple < '(' (FunctionDefinitionArgument (:Spacing ',' :Spacing FunctionDefinitionArgument)*)? ')'
+    TemplateDefinitionArgument      <  Name (':' TypeName)? ('=' Expr)?
+
+    # Note that we can assign imports to symbols
+    AssignStmt <  Name (':' TypeName)? AssignOperator (Import / Expr)
+    AssignOperator <-
+                   /  '='
+                   /  '~='
+                   /  '+='
+                   /  '-='
+                   /  '*='
+                   /  '/='
+                   /  '|='
+                   /  '^='
+                   /  '<<='
+                   /  '>>='
+    ReturnStmt <  'return ' Expr
+    AssertStmt <  'assert ' Expr
+    PrintStmt  <  'print '  Expr
+
+    StaticStmt(Stmt) < 'static ' Stmt
+    StaticStuff <-
+                /  StaticStmt(AssertStmt)
+
+    ExprSingleParenthizedExpr      <- '(' Expr ')' &!ClosureSigil
+    ExprLightSingleParenthizedExpr <- '(' ExprLight ')' &!ClosureSigil
+
+    ExprTuple <  '(' Expr ',' (:Spacing Expr :Spacing ',')* ')'
+
+    ExprClosure <  (FunctionDefinitionArgumentTuple / Name) :ClosureSigil (ScopeStart Expr* ScopeEnd / Expr)
+
+    ExprBoolNegate <- '!' ExprLight
+    ExprCompare <-
+                   ExprLight
+                   ^(
+                     / ' lt '
+                     / ' lte'
+                     / ' gt '
+                     / ' gte '
+                     / ' not eq '
+                     / ' eq '
+                   )
+                   ExprLight
+
+    ExprArith < ArithAddMinus / ArithMultDiv
+    ArithAddMinus < (ArithMultDiv / ExprLight) ^('+' / '-') (ArithMultDiv / ExprLight)
+    ArithMultDiv  < ExprLight ^('*' / '/') ExprLight
+
+    ExprIfElse <  'if ' ExprCond IfScopeStart ExprIfBody ScopeEnd
+                  ('else' ScopeStart ExprIfBody ScopeEnd)?
+    ExprCond   <- Expr
+    ExprIfBody <- (:Spacing FunctionBodyStmt)*
+
+    ExprForeach <  'foreach ' ForeachLoopParams 'in ' Expr ExprForeachBody ('end_foreach' ExprForeachBody)?
+    ExprForeachBody <- ScopeStart (:Spacing FunctionBodyStmt)* :Spacing ScopeEnd
+    ForeachLoopParams <- Name (:Spacing ',' :Spacing Name)*
+
+    InfixExprSuffix <- :Spacing '`' QualName TemplateInstSuffix? '`' :Spacing Expr
+
+    ExprFuncCall <- QualName FuncCallArgumentTuple
+    FuncCallArgumentTuple <  '(' (FuncCallArgument (',' :Spacing FuncCallArgument)*)? ')'
+    FuncCallArgument <
+                     /  Name '=' Expr
+                     /  Expr
+
+    ExprPropertyAccess <- '.' Name
+
+    ExprRange <- (ExprArith / ExprLight) '..' (ExprArith / ExprLight)
+
+    ExprArray   <  '[' ','* (ArrayValue (:Spacing ','+ :Spacing ArrayValue)*)? ','* ']'
+    ArrayValue  <  Name '=' Expr / Expr
+    ArrayAccess <  '[' (Expr (:Spacing ',' :Spacing Expr)*)? ']'
+
+    # Please do not put backquote strings in here - it's ambiguous with InfixExprSuffix
+    ExprString <-
+               /        quote ~EscapedChar(      quote)*       quote
+               /  doublequote ~EscapedChar(doublequote)* doublequote
+
+    # Tokens
+
+    ScopeStart <: '{'
+    ScopeEnd   <: '}'
+    IfScopeStart <: ScopeStart
+
+    NamespaceSep <~ '.'
+
+    ReturnTypeSigil <: '->'
+    ClosureSigil    <: '->'
+
+    Number <-
+           /  HexNumbers
+           /  OctalNumbers
+           /  BinaryNumbers
+           /  DecimalNumbers FloatingPointSuffix?
+
+    HexNumbers          <- :'0x' ([0-9a-zA-Z_])+
+    OctalNumbers        <- :'0o' ([0-7_])+
+    BinaryNumbers       <- :'0b' ('0' / '1' / '_')+
+    DecimalNumbers      <- (^'-')? ~([0-9_])+
+    FloatingPointSuffix <- :'.' ~DecimalNumbers+
+
+    # Do not put this into Spacing. It's supposed to be in the AST.
+    DocBlockComment <- "/++" ~(DocBlockComment / (!("/++" / "+/") .)*)* "+/"
+
+    LineComment      <- "//" AllUntil(NewLine)
+    MultiLineComment <- "/*" ~(MultiLineComment / Text)* "*/"
+
+    DiscardableComments <- LineComment
+                        /  MultiLineComment
+
+    Text <~ (!("/*" / "*/") .)*
+
+    AnyCharButLF <~ !NewLine .
+
+    NewLine <- '\n' / '\r\n'
+    Spacing <: (blank+ / DiscardableComments)*
+    ExplicitSpacing <: (blank+ / DiscardableComments)+
+
+    EscapeSequence <~ backslash ( quote
+                                / doublequote
+                                / backslash
+                                / [abfnrtv]
+                                )
+
+    # Parameterized rules
+
+    EscapedChar(Char) <~ EscapeSequence
+                      /  !Char .
+
+    # Stolen from the docs ^^
+    MaybeList(Elem, Sep)       <~ (Elem (Spacing :Sep Spacing Elem)*)?
+    List(Elem, Sep)            <~ Elem (Spacing :Sep Spacing Elem)*
+    NoDiscardList(Elem, Sep)   <~ Elem (Spacing Sep Spacing Elem)*
+    Until(Expr, Pred)          <- (!Pred Expr)*
+    AllUntil(Pred)             <~ Until(., Pred)
